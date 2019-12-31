@@ -1,8 +1,20 @@
 __author__ = 'Tibbers'
-from Tkinter import *
-import tkMessageBox
+import sys
+if sys.version_info[0] < 3:
+    # from Tkinter import *
+    import tkMessageBox as msgbox
+else:
+    # from tkinter import *
+    from tkinter import Button, Label, W,E,N,S
+    from tkinter import messagebox as msgbox
+
 # require: python-pil & python-pil.imagetk
-from PIL import Image, ImageTk
+try:
+    from PIL import Image, ImageTk
+except ImportError:
+    print("pip install Pillow")
+    raise SystemExit
+
 import socket, threading, sys, traceback, os
 
 from RtpPacket import RtpPacket
@@ -176,7 +188,7 @@ class Client:
         try:
             self.rtspSocket.connect((self.serverAddr, self.serverPort))
         except:
-            tkMessageBox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
+            msgbox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 
     def sendRtspRequest(self, requestCode):
         """Send RTSP request to the server."""
@@ -194,8 +206,10 @@ class Client:
             # Write the RTSP request to be sent.
             # request = ...
             request = "SETUP " + str(self.fileName) + "\n" + str(self.rtspSeq) + "\n" + " RTSP/1.0 RTP/UDP " + str(self.rtpPort)
-
-            self.rtspSocket.send(request)
+            if sys.version_info[0] < 3:
+                self.rtspSocket.send(request)
+            else:
+                self.rtspSocket.send(request.encode())
             # Keep track of the sent request.
             # self.requestSent = ...
             self.requestSent = self.SETUP
@@ -329,7 +343,7 @@ class Client:
             # Bind the socket to the address using the RTP port given by the client user
             # ...
 #        except:
-#            tkMessageBox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
+#            msgbox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 
         try:
             #self.rtpSocket.connect(self.serverAddr,self.rtpPort)
@@ -338,13 +352,13 @@ class Client:
             print("Bind RtpPort Success")
 
         except:
-            tkMessageBox.showwarning('Connection Failed', 'Connection to rtpServer failed...')
+            msgbox.showwarning('Connection Failed', 'Connection to rtpServer failed...')
 
 
     def handler(self):
         """Handler on explicitly closing the GUI window."""
         self.pauseMovie()
-        if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
+        if msgbox.askokcancel("Quit?", "Are you sure you want to quit?"):
             self.exitClient()
         else: # When the user presses cancel, resume playing.
             #self.playMovie()

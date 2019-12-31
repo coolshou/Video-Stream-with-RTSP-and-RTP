@@ -3,7 +3,10 @@
 
 __author__ = 'Tibbers'
 import sys
-from Tkinter import Tk
+if sys.version_info[0] < 3:
+    from Tkinter import Tk
+else:
+    from tkinter import Tk
 from Client import Client
 
 if __name__ == "__main__":
@@ -13,7 +16,9 @@ if __name__ == "__main__":
         rtpPort = sys.argv[3]
         fileName = sys.argv[4]
     except:
-        print("[Usage: ClientLauncher.py Server_name Server_port RTP_port Video_file]\n")
+        print("[Usage: ClientLauncher.py Server_name Server_port RTP_port Video_file]")
+        print("  eg: ClientLauncher.py 192.168.70.147 10250 5008 video.mjpeg")
+        sys.exit()
 
     root = Tk()
 
