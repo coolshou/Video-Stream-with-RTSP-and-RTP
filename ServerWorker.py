@@ -1,14 +1,23 @@
+'''
+    server worker
+'''
 __author__ = 'Tibbers'
 
-import random, math
+import random
+import math
 import time
 from random import randint
-import sys, traceback, threading, socket
+import sys
+import traceback
+import threading
+import socket
 
 from VideoStream import VideoStream
 from RtpPacket import RtpPacket
 
 class ServerWorker:
+    ''' ServerWorker class
+    '''
     SETUP = 'SETUP'
     PLAY = 'PLAY'
     PAUSE = 'PAUSE'
@@ -29,6 +38,7 @@ class ServerWorker:
         self.clientInfo = clientInfo
 
     def run(self):
+        """run thread"""
         threading.Thread(target=self.recvRtspRequest).start()
 
     def recvRtspRequest(self):
@@ -43,7 +53,10 @@ class ServerWorker:
     def processRtspRequest(self, data):
         """Process RTSP request sent from the client."""
         # Get the request type
-        request = data.split('\n')
+        if sys.version_info[0] < 3:
+            request = data.split('\n')
+        else:
+            request = data.encode().split('\n')
         line1 = request[0].split(' ')
         requestType = line1[0]
         # Get the media file name
@@ -90,7 +103,7 @@ class ServerWorker:
 
                 # Create a new thread and start sending RTP packets
                 self.clientInfo['event'] = threading.Event()
-                self.clientInfo['worker']= threading.Thread(target=self.sendRtp)
+                self.clientInfo['worker'] = threading.Thread(target=self.sendRtp)
                 self.clientInfo['worker'].start()
         # Process RESUME request
             elif self.state == self.PAUSE:
@@ -124,7 +137,7 @@ class ServerWorker:
         counter = 0
         threshold = 10
         while True:
-            jit = math.floor(random.uniform(-13,5.99))
+            jit = math.floor(random.uniform(-13, 5.99))
             jit = jit / 1000
 
             self.clientInfo['event'].wait(0.05 + jit)
@@ -149,9 +162,10 @@ class ServerWorker:
 
                     port = int(self.clientInfo['rtpPort'])
 
-                    prb = math.floor(random.uniform(1,100))
+                    prb = math.floor(random.uniform(1, 100))
                     if prb > 5.0:
-                        self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber),(self.clientInfo['rtspSocket'][1][0],port))
+                        self.clientInfo['rtpSocket'].sendto(self.makeRtp(data, frameNumber),
+                                                            (self.clientInfo['rtspSocket'][1][0], port))
                         counter += 1
                         time.sleep(jit)
                 except:
