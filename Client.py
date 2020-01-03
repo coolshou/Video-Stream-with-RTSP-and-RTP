@@ -2,9 +2,9 @@ __author__ = 'Tibbers'
 import sys
 if sys.version_info[0] < 3:
     # from Tkinter import *
+    from Tkinter import Button, Label, W,E,N,S
     import tkMessageBox as msgbox
 else:
-    # from tkinter import *
     from tkinter import Button, Label, W,E,N,S
     from tkinter import messagebox as msgbox
 
@@ -93,7 +93,7 @@ class Client:
         self.master.destroy() # Close the gui window
         f = CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT
         if os.path.exists(f):
-            os.remove() # Delete the cache image from video
+            os.remove(f) # Delete the cache image from video
         if self.frameNbr > 0:
             rate = float(self.counter/self.frameNbr)
             print('-'*60 + "\nRTP Packet Loss Rate :" + str(rate) +"\n" + '-'*60)
@@ -115,6 +115,7 @@ class Client:
             self.sendRtspRequest(self.PLAY)
 
     def listenRtp(self):
+        """Listen for RTP packets."""
         while True:
             try:
                 data,addr = self.rtpSocket.recvfrom(20480)
@@ -226,7 +227,10 @@ class Client:
             # request = ...
             request = "PLAY " + "\n" + str(self.rtspSeq)
 
-            self.rtspSocket.send(request)
+            if sys.version_info[0] < 3:
+                self.rtspSocket.send(request)
+            else:
+                self.rtspSocket.send(request.encode())
             print('-'*60 + "\nPLAY request sent to Server...\n" + '-'*60)
             # Keep track of the sent request.
             # self.requestSent = ...
@@ -240,7 +244,10 @@ class Client:
             # Write the RTSP request to be sent.
             # request = ...
             request = "PAUSE " + "\n" + str(self.rtspSeq)
-            self.rtspSocket.send(request)
+            if sys.version_info[0] < 3:
+                self.rtspSocket.send(request)
+            else:
+                self.rtspSocket.send(request.encode())
             print('-'*60 + "\nPAUSE request sent to Server...\n" + '-'*60)
             # Keep track of the sent request.
             # self.requestSent = ...
@@ -257,7 +264,10 @@ class Client:
             # Write the RTSP request to be sent.
             # request = ...
             request = "TEARDOWN " + "\n" + str(self.rtspSeq)
-            self.rtspSocket.send(request)
+            if sys.version_info[0] < 3:
+                self.rtspSocket.send(request)
+            else:
+                self.rtspSocket.send(request.encode())
             print('-'*60 + "\nTEARDOWN request sent to Server...\n" + '-'*60)
             # Keep track of the sent request.
             # self.requestSent = ...
@@ -289,19 +299,32 @@ class Client:
         print("Parsing Received Rtsp data...")
 
         """Parse the RTSP reply from the server."""
-        lines = data.split('\n')
-        seqNum = int(lines[1].split(' ')[1])
+        if sys.version_info[0] < 3:
+            lines = data.split('\n')
+            seqNum = int(lines[1].split(' ')[1])
+        else:
+            lines = data.split(b'\n')
+            seqNum = int(lines[1].split(b' ')[1])
+
+        # if type(seqNum) == bytes:
 
         # Process only if the server reply's sequence number is the same as the request's
         if seqNum == self.rtspSeq:
-            session = int(lines[2].split(' ')[1])
+            if sys.version_info[0] < 3:
+                session = int(lines[2].split(' ')[1])
+            else:
+                session = int(lines[2].split(b' ')[1])
             # New RTSP session ID
             if self.sessionId == 0:
                 self.sessionId = session
 
             # Process only if the session ID is the same
             if self.sessionId == session:
-                if int(lines[0].split(' ')[1]) == 200:
+                if sys.version_info[0] < 3:
+                    stat = int(lines[0].split(' ')[1])
+                else:
+                    stat = int(lines[0].split(b' ')[1])
+                if stat == 200:
                     if self.requestSent == self.SETUP:
                         #-------------
                         # TO COMPLETE

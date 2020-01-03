@@ -53,16 +53,28 @@ class ServerWorker:
     def processRtspRequest(self, data):
         """Process RTSP request sent from the client."""
         # Get the request type
-        if sys.version_info[0] < 3:
-            request = data.split('\n')
+        # SETUP video.mjpeg\n1\n RTSP/1.0 RTP/UDP 5008
+        print("data type: %s: %s" % (type(data), data))
+        if type(data) == bytes:
+            request = data.split(b'\n')
+            line1 = request[0].split(b' ')
+            requestType = line1[0].decode()
+            # Get the media file name
+            filename = line1[1].decode()
+            # Get the RTSP sequence number
+            seq = request[1].split(b' ')
+            print("seq: %s" % type(seq))
+            if type(seq) == list:
+                seq = [x.decode('utf-8') for x in seq]
         else:
-            request = data.encode().split('\n')
-        line1 = request[0].split(' ')
-        requestType = line1[0]
-        # Get the media file name
-        filename = line1[1]
-        # Get the RTSP sequence number
-        seq = request[1].split(' ')
+            request = data.split('\n')
+            line1 = request[0].split(' ')
+            requestType = line1[0]
+            # Get the media file name
+            filename = line1[1]
+            # Get the RTSP sequence number
+            seq = request[1].split(' ')
+
 
         # Process SETUP request
         if requestType == self.SETUP:
@@ -85,7 +97,10 @@ class ServerWorker:
                 self.replyRtsp(self.OK_200, seq[0])  #seq[0] the sequenceNum received from Client.py
                 print("sequenceNum is " + seq[0])
                 # Get the RTP/UDP port from the last line
-                self.clientInfo['rtpPort'] = request[2].split(' ')[3]
+                if sys.version_info[0] < 3:
+                    self.clientInfo['rtpPort'] = request[2].split(' ')[3]
+                else:
+                    self.clientInfo['rtpPort'] = request[2].split(b' ')[3].decode()
                 print('-'*60 + "\nrtpPort is :" + self.clientInfo['rtpPort'] + "\n" + '-'*60)
                 print("filename is " + filename)
 
@@ -130,6 +145,8 @@ class ServerWorker:
 
             # Close the RTP socket
             self.clientInfo['rtpSocket'].close()
+        else:
+            print("Unknown requestType: %s (%s)" % (requestType, type(requestType)))
 
     def sendRtp(self):
         """Send RTP packets over UDP."""
@@ -182,7 +199,7 @@ class ServerWorker:
         cc = 0
         marker = 0
         pt = 26 # MJPEG type
-        seqnum = frameNbr
+        seqnum = frameNbr  # TODO byte can not hold over 255!!
         ssrc = 0
 
         rtpPacket = RtpPacket()
@@ -197,10 +214,15 @@ class ServerWorker:
             #print "200 OK"
             reply = 'RTSP/1.0 200 OK\nCSeq: ' + seq + '\nSession: ' + str(self.clientInfo['session'])
             connSocket = self.clientInfo['rtspSocket'][0]
-            connSocket.send(reply)
+            if sys.version_info[0] < 3:
+                connSocket.send(reply)
+            else:
+                connSocket.send(reply.encode())
 
         # Error messages
         elif code == self.FILE_NOT_FOUND_404:
             print("404 NOT FOUND")
         elif code == self.CON_ERR_500:
             print("500 CONNECTION ERROR")
+        else:
+            print("500 NOT SUPPORT CODE : %s" % code)
