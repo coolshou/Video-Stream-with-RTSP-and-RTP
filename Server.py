@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'Tibbers'
-import sys, socket
+import sys
+import socket
 
 from ServerWorker import ServerWorker
 
