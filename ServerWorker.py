@@ -54,7 +54,7 @@ class ServerWorker:
         """Process RTSP request sent from the client."""
         # Get the request type
         # SETUP video.mjpeg\n1\n RTSP/1.0 RTP/UDP 5008
-        print("data type: %s: %s" % (type(data), data))
+        # print("data type: %s: %s" % (type(data), data))
         if type(data) == bytes:
             request = data.split(b'\n')
             line1 = request[0].split(b' ')
@@ -63,7 +63,6 @@ class ServerWorker:
             filename = line1[1].decode()
             # Get the RTSP sequence number
             seq = request[1].split(b' ')
-            print("seq: %s" % type(seq))
             if type(seq) == list:
                 seq = [x.decode('utf-8') for x in seq]
         else:
@@ -83,7 +82,6 @@ class ServerWorker:
                 print("SETUP Request received\n")
 
                 try:
-
                     self.clientInfo['videoStream'] = VideoStream(filename)
                     self.state = self.READY
 
