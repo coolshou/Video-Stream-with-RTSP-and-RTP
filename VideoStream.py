@@ -38,6 +38,8 @@ class VideoStream:
                 print('-'*10 + "\nNext Frame (#" + str(self.frameNum) + ") length:" + str(framelength) + "\n" + '-'*10)
 
                 return frame
+        else:
+            print("No more data to send!!")
 
     def frameNbr(self):
         """Get frame number."""
